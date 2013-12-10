@@ -61,8 +61,10 @@ public class AttributeType {
 	 * @param code type code, 1-255
 	 */
 	public void setTypeCode(int code) {
-		if (code < 1 || code > 255)
-			throw new IllegalArgumentException("code out of bounds");
+		//if (code < 1 || code > 255)
+		if (code < 0 || code > 65535) // DAVI code 0 and > 255 on perl dictionary
+			//throw new IllegalArgumentException("code out of bounds");
+			throw new IllegalArgumentException("code out of bounds: "+code);
 		this.typeCode = code;
 	}
 	

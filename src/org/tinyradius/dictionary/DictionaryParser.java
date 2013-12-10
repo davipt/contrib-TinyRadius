@@ -87,7 +87,8 @@ public class DictionaryParser {
 	 */
 	private static void parseAttributeLine(WritableDictionary dictionary, StringTokenizer tok, int lineNum) 
 	throws IOException {
-		if (tok.countTokens() != 3)
+		//if (tok.countTokens() != 3)
+		if (tok.countTokens() < 3) // DAVI allow comments
 			throw new IOException("syntax error on line " + lineNum);
 		
 		// read name, code, type
@@ -111,7 +112,8 @@ public class DictionaryParser {
 	 */
 	private static void parseValueLine(WritableDictionary dictionary, StringTokenizer tok, int lineNum) 
 	throws IOException {
-		if (tok.countTokens() != 3)
+		//if (tok.countTokens() != 3)
+		if (tok.countTokens() < 3) // DAVI allow comments
 			throw new IOException("syntax error on line " + lineNum);
 
 		String typeName = tok.nextToken().trim();
@@ -121,8 +123,11 @@ public class DictionaryParser {
 		AttributeType at = dictionary.getAttributeTypeByName(typeName);
 		if (at == null)
 			throw new IOException("unknown attribute type: " + typeName + ", line: " + lineNum);
-		else
-			at.addEnumerationValue(Integer.parseInt(valStr), enumName);
+		//else
+		//	at.addEnumerationValue(Integer.parseInt(valStr), enumName);
+		// DAVI parse number dec or hex
+		int code = valStr.startsWith("0x") ? Integer.parseInt(valStr.substring(2), 16) : Integer.parseInt(valStr); // DAVI
+		at.addEnumerationValue(code, enumName);
 	}
 
 	/**
@@ -130,12 +135,15 @@ public class DictionaryParser {
 	 */
 	private static void parseVendorAttributeLine(WritableDictionary dictionary, StringTokenizer tok, int lineNum) 
 	throws IOException {
-		if (tok.countTokens() != 4)
+		//if (tok.countTokens() != 4)
+		if (tok.countTokens() < 4) // DAVI allow comments
 			throw new IOException("syntax error on line " + lineNum);
 		
 		String vendor = tok.nextToken().trim();
 		String name = tok.nextToken().trim();
-		int code = Integer.parseInt(tok.nextToken().trim());
+		// DAVI parse number dec or hex
+		String t1 = tok.nextToken().trim();
+		int code = t1.startsWith("0x") ? Integer.parseInt(t1.substring(2), 16) : Integer.parseInt(t1); // DAVI
 		String typeStr = tok.nextToken().trim();
 
 		Class type = getAttributeTypeClass(code, typeStr);
@@ -148,13 +156,23 @@ public class DictionaryParser {
 	 */
 	private static void parseVendorLine(WritableDictionary dictionary, StringTokenizer tok, int lineNum) 
 	throws IOException {
-		if (tok.countTokens() != 2)
+		//if (tok.countTokens() != 2)
+		if (tok.countTokens() < 2) // DAVI allow comments
 			throw new IOException("syntax error on line " + lineNum);
 		
-		int vendorId = Integer.parseInt(tok.nextToken().trim());
-		String vendorName = tok.nextToken().trim();
-		
-		dictionary.addVendor(vendorId, vendorName);
+		String t1=tok.nextToken().trim(),t2=tok.nextToken().trim();
+		// DAVI parse number dec or hex
+		try {
+			int vendorId = Integer.parseInt(t1);
+			String vendorName = t2;
+
+			dictionary.addVendor(vendorId, vendorName);
+		} catch( NumberFormatException e ) {
+			int vendorId = Integer.parseInt(t2);
+			String vendorName = t1;
+
+			dictionary.addVendor(vendorId, vendorName);
+		}
 	}
 	
 	/**
@@ -191,7 +209,9 @@ public class DictionaryParser {
 			type = StringAttribute.class;
 		else if (typeStr.equalsIgnoreCase("octets"))
 			type = RadiusAttribute.class;
-		else if (typeStr.equalsIgnoreCase("integer") || typeStr.equalsIgnoreCase("date"))
+		// DAVI allow integer8
+		//else if (typeStr.equalsIgnoreCase("integer") || typeStr.equalsIgnoreCase("date"))
+		else if (typeStr.equalsIgnoreCase("integer") ||typeStr.equalsIgnoreCase("integer8") || typeStr.equalsIgnoreCase("date"))
 			type = IntegerAttribute.class;
 		else if (typeStr.equalsIgnoreCase("ipaddr"))
 			type = IpAttribute.class;
