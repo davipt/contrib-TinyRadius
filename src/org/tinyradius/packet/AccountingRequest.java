@@ -6,9 +6,9 @@
  */
 package org.tinyradius.packet;
 
+import java.net.InetSocketAddress;
 import java.security.MessageDigest;
 import java.util.List;
-
 import org.tinyradius.attribute.IntegerAttribute;
 import org.tinyradius.attribute.RadiusAttribute;
 import org.tinyradius.attribute.StringAttribute;
@@ -45,6 +45,9 @@ public class AccountingRequest extends RadiusPacket {
 	 * Acct-Status-Type: Accounting-Off
 	 */
 	public static final int ACCT_STATUS_TYPE_ACCOUNTING_OFF = 8;
+	
+	/** */
+	public InetSocketAddress client;
 	
 	/**
 	 * Constructs an Accounting-Request packet to be sent to a Radius server.

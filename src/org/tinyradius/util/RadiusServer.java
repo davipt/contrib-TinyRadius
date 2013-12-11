@@ -134,55 +134,6 @@ public abstract class RadiusServer {
 	}
 	
 	/**
-     * Starts the Radius server.
-     * @param listenAuth open auth port?
-     * @param listenAcct open acct port?
-	 * @throws SocketException 
-     */
-    public void start(int listenAuth, int listenAcct) throws SocketException {
-        for(int i=0; i<listenAuth; i++) {
-            getAuthSocket();
-            new Thread() {
-                public void run() {
-                    setName("Radius Auth Listener");
-                    try {
-                        logger.info("starting RadiusAuthListener on port " + getAuthPort());
-                        listen(authSocket);
-                        logger.info("RadiusAuthListener is being terminated");
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                        logger.fatal("auth thread stopped by exception", e);
-                    } finally {
-                        authSocket.close();
-                        logger.debug("auth socket closed");
-                    }
-                }
-            }.start();
-        }
-        
-        for(int i=0; i<listenAcct; i++) {
-            getAcctSocket();
-            new Thread() {
-                public void run() {
-                    setName("Radius Acct Listener");
-                    try {
-                        logger.info("starting RadiusAcctListener on port " + getAcctPort());
-                        listen(acctSocket);
-                        logger.info("RadiusAcctListener is being terminated");
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                        logger.fatal("acct thread stopped by exception", e);
-                    } finally {
-                        acctSocket.close();
-                        logger.debug("acct socket closed");
-                    }
-                }
-            }.start();
-        }
-    }
-    
-	
-	/**
 	 * Stops the server and closes the sockets.
 	 */
 	public void stop() {
