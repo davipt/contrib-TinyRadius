@@ -29,7 +29,11 @@
             <version>1.1</version>
         </dependency>
     </dependencies>
-    <build>
-        <sourceDirectory>src</sourceDirectory>        
-    </build>
+	<properties>
+		<project.encoding>UTF-8</project.encoding>
+		<project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>${project.encoding}</project.reporting.outputEncoding>
+		<maven.compile.encoding>${project.encoding}</maven.compile.encoding>
+		<maven.test.compile.encoding>${project.encoding}</maven.test.compile.encoding>
+    </properties>
 </project>
