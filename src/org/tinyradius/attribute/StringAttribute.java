@@ -14,6 +14,9 @@ import java.io.UnsupportedEncodingException;
  */
 public class StringAttribute extends RadiusAttribute {
 
+    private String cachedValue;
+    private int cachedHash;
+    
 	/**
 	 * Constructs an empty string attribute.
 	 */
@@ -36,11 +39,26 @@ public class StringAttribute extends RadiusAttribute {
 	 * @return a string
 	 */
 	public String getAttributeValue() {
-		try {
-			return new String(getAttributeData(), "UTF-8");
-		} catch (UnsupportedEncodingException uee) {
-			return new String(getAttributeData());
-		}
+	    byte[] b = getAttributeData();
+	    int bhash = b.hashCode();
+	    if (this.cachedValue == null || this.cachedHash != bhash) {
+	        this.cachedValue = getAttributeValue(b);
+	        this.cachedHash = bhash;
+	    }
+		return this.cachedValue;
+	}
+	
+    /**
+     * Returns the string value of the given attribute.
+     * @param b the given attribute value.
+     * @return a string
+     */
+	public static String getAttributeValue(byte[] b) {
+        try {
+            return new String(b, "UTF-8");
+        } catch (UnsupportedEncodingException uee) {
+            return new String(b);
+        }
 	}
 	
 	/**
@@ -52,6 +70,8 @@ public class StringAttribute extends RadiusAttribute {
 			throw new NullPointerException("string value not set");
 		try {
 			setAttributeData(value.getBytes("UTF-8"));
+			this.cachedValue = value;
+			this.cachedHash = getAttributeData().hashCode();
 		} catch (UnsupportedEncodingException uee) {
 			setAttributeData(value.getBytes());
 		}

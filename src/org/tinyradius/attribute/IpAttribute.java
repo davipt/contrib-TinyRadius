@@ -7,13 +7,15 @@
 package org.tinyradius.attribute;
 
 import java.util.StringTokenizer;
-
 import org.tinyradius.util.RadiusException;
 
 /**
  * This class represents a Radius attribute for an IP number.
  */
 public class IpAttribute extends RadiusAttribute {
+
+    private String cachedValue;
+    private int cachedHash;
 
 	/**
 	 * Constructs an empty IP attribute.
@@ -48,21 +50,38 @@ public class IpAttribute extends RadiusAttribute {
 	 * @see org.tinyradius.attribute.RadiusAttribute#getAttributeValue()
 	 */
 	public String getAttributeValue() {
-		StringBuffer ip = new StringBuffer();
-		byte[] data = getAttributeData();
-		if (data == null || data.length != 4)
-			throw new RuntimeException("ip attribute: expected 4 bytes attribute data");
-		
-		ip.append(data[0] & 0x0ff);
-		ip.append(".");
-		ip.append(data[1] & 0x0ff);
-		ip.append(".");
-		ip.append(data[2] & 0x0ff);
-		ip.append(".");
-		ip.append(data[3] & 0x0ff);
-		
-		return ip.toString();
+	    byte[] data = getAttributeData();
+	    int bhash = data == null ? 0 : data.hashCode();
+	    if (this.cachedValue == null || this.cachedHash != bhash) {
+    		this.cachedValue = getAttributeValue(data);
+    		this.cachedHash = bhash;
+	    }
+	    return this.cachedValue;
 	}
+	
+    /**
+     * Returns the attribute value (IP number) as a string of the
+     * format "xx.xx.xx.xx".
+     * @param b the data
+     * @return the string
+     * @see org.tinyradius.attribute.RadiusAttribute#getAttributeValue()
+     */
+    public static String getAttributeValue(byte[] b) {
+        StringBuffer ip = new StringBuffer();
+        if (b == null || b.length != 4)
+            throw new RuntimeException("ip attribute: expected 4 bytes attribute data");
+        
+        ip.append(b[0] & 0x0ff);
+        ip.append(".");
+        ip.append(b[1] & 0x0ff);
+        ip.append(".");
+        ip.append(b[2] & 0x0ff);
+        ip.append(".");
+        ip.append(b[3] & 0x0ff);
+        
+        return ip.toString();
+    }
+
 	
 	/**
 	 * Sets the attribute value (IP number). String format:
@@ -88,6 +107,9 @@ public class IpAttribute extends RadiusAttribute {
 		}
 		
 		setAttributeData(data);
+		
+		this.cachedValue = value;
+		this.cachedHash = data.hashCode();
 	}
 	
 	/**

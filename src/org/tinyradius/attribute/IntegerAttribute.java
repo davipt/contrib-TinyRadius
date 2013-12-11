@@ -37,28 +37,53 @@ public class IntegerAttribute extends RadiusAttribute {
 	 * @return a string
 	 */
 	public int getAttributeValueInt() {
-		byte[] data = getAttributeData();
-		return (((data[0] & 0x0ff) << 24) | ((data[1] & 0x0ff) << 16) | 
-				((data[2] & 0x0ff) << 8) | (data[3] & 0x0ff));
+		return getAttributeValueInt(getAttributeData());
 	}
 	
+	/**
+     * Returns the string value of the given attribute.
+     * @param data the attribute data.
+     * @return a string
+     */
+    public static int getAttributeValueInt(byte[] data) {
+        /*
+        return (((data[0] & 0x0ff) << 24) | ((data[1] & 0x0ff) << 16) | 
+                ((data[2] & 0x0ff) << 8) | (data[3] & 0x0ff));
+                */
+        int r = 0;
+        for(byte b : data)
+            r = (r << 8) | (b & 0xff);
+        return r;
+    }
+
 	/**
 	 * Returns the value of this attribute as a string.
 	 * Tries to resolve enumerations.
 	 * @see org.tinyradius.attribute.RadiusAttribute#getAttributeValue()
 	 */
 	public String getAttributeValue() {
-		int value = getAttributeValueInt();
-		AttributeType at = getAttributeTypeObject();
-		if (at != null) {
-			String name = at.getEnumeration(value);
-			if (name != null)
-				return name;
-		}
-
-		return Integer.toString(value);
+	    return getAttributeValue(getAttributeData(), getAttributeTypeObject());
 	}
-	
+
+   /**
+     * Returns the value of this attribute as a string.
+     * Tries to resolve enumerations.
+     * @param data the attribute data.
+     * @param at the attribute type.
+     * @return the value.
+     * @see org.tinyradius.attribute.RadiusAttribute#getAttributeValue()
+     */
+    public static String getAttributeValue(byte[] data, AttributeType at) {
+        int value = getAttributeValueInt(data);
+        if (at != null) {
+            String name = at.getEnumeration(value);
+            if (name != null)
+                return name;
+        }
+
+        return Integer.toString(value);
+    }
+
 	/**
 	 * Sets the value of this attribute.
 	 * @param value integer value

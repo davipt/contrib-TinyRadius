@@ -134,6 +134,55 @@ public abstract class RadiusServer {
 	}
 	
 	/**
+     * Starts the Radius server.
+     * @param listenAuth open auth port?
+     * @param listenAcct open acct port?
+	 * @throws SocketException 
+     */
+    public void start(int listenAuth, int listenAcct) throws SocketException {
+        for(int i=0; i<listenAuth; i++) {
+            getAuthSocket();
+            new Thread() {
+                public void run() {
+                    setName("Radius Auth Listener");
+                    try {
+                        logger.info("starting RadiusAuthListener on port " + getAuthPort());
+                        listen(authSocket);
+                        logger.info("RadiusAuthListener is being terminated");
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        logger.fatal("auth thread stopped by exception", e);
+                    } finally {
+                        authSocket.close();
+                        logger.debug("auth socket closed");
+                    }
+                }
+            }.start();
+        }
+        
+        for(int i=0; i<listenAcct; i++) {
+            getAcctSocket();
+            new Thread() {
+                public void run() {
+                    setName("Radius Acct Listener");
+                    try {
+                        logger.info("starting RadiusAcctListener on port " + getAcctPort());
+                        listen(acctSocket);
+                        logger.info("RadiusAcctListener is being terminated");
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        logger.fatal("acct thread stopped by exception", e);
+                    } finally {
+                        acctSocket.close();
+                        logger.debug("acct socket closed");
+                    }
+                }
+            }.start();
+        }
+    }
+    
+	
+	/**
 	 * Stops the server and closes the sockets.
 	 */
 	public void stop() {
@@ -223,10 +272,11 @@ public abstract class RadiusServer {
 	 * A packet is discarded as a duplicate if in the duplicate interval
 	 * there was another packet with the same identifier originating from the
 	 * same address.
-	 * @param duplicateInterval duplicate interval (ms), >0
+	 * Setting to 0 disables the duplicate verification.
+	 * @param duplicateInterval duplicate interval (ms), >=0
 	 */
 	public void setDuplicateInterval(long duplicateInterval) {
-		if (duplicateInterval <= 0)
+		if (duplicateInterval < 0)
 			throw new IllegalArgumentException("duplicate interval must be positive");
 		this.duplicateInterval = duplicateInterval;
 	}
@@ -367,7 +417,7 @@ public abstract class RadiusServer {
 		RadiusPacket response = null;
 		
 		// check for duplicates
-		if (!isPacketDuplicate(request, remoteAddress)) {
+		if (this.duplicateInterval == 0 || !isPacketDuplicate(request, remoteAddress)) {
 			if (localAddress.getPort() == getAuthPort()) {
 				// handle packets on auth port
 				if (request instanceof AccessRequest)
@@ -456,7 +506,9 @@ public abstract class RadiusServer {
 	protected RadiusPacket makeRadiusPacket(DatagramPacket packet, String sharedSecret) 
 	throws IOException, RadiusException {
 		ByteArrayInputStream in = new ByteArrayInputStream(packet.getData());
-		return RadiusPacket.decodeRequestPacket(in, sharedSecret);
+		RadiusPacket r = RadiusPacket.decodeRequestPacket(in, sharedSecret);
+		r.packetSize = packet.getLength();
+		return r;
 	}
 	
 	/**

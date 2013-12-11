@@ -70,6 +70,9 @@ public class RadiusPacket {
 	 * Packet header length.
 	 */
     public static final int RADIUS_HEADER_LENGTH  = 20;
+    
+    /** */
+    public int packetSize;
 
 	/**
 	 * Builds a Radius packet without attributes. Retrieves
