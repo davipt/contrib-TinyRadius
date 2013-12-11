@@ -32,23 +32,18 @@ extends MemoryDictionary{
 	 * cannot be constructed by other classes. 
 	 */
 	private DefaultDictionary() {
+	    super();
+        try {
+            InputStream source = DefaultDictionary.class.getResourceAsStream(DICTIONARY_RESOURCE);
+            DictionaryParser.parseDictionary(source, instance);
+            source.close();
+        } catch (IOException e) {
+            throw new RuntimeException("default dictionary unavailable", e);
+        }
 	}
 	
 	private static final String DICTIONARY_RESOURCE = "org/tinyradius/dictionary/default_dictionary";
-	private static DefaultDictionary instance = null;
+	private static final DefaultDictionary instance = new DefaultDictionary();
 	
-	/**
-	 * Creates the singleton instance of this object
-	 * and parses the classpath ressource.
-	 */
-	static {
-		try {
-			instance = new DefaultDictionary();
-    		InputStream source = DefaultDictionary.class.getClassLoader().getResourceAsStream(DICTIONARY_RESOURCE);
-			DictionaryParser.parseDictionary(source, instance);
-		} catch (IOException e) {
-			throw new RuntimeException("default dictionary unavailable", e);
-		}
-	}
 	
 }
