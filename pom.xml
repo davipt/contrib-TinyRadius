@@ -29,9 +29,6 @@
             <version>1.1</version>
         </dependency>
     </dependencies>
-    <build>
-        <sourceDirectory>src</sourceDirectory>        
-    </build>
 	<properties>
 		<project.encoding>UTF-8</project.encoding>
 		<project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
