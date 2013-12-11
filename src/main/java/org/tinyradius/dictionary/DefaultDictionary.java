@@ -35,13 +35,13 @@ extends MemoryDictionary{
 	    super();
         try {
             InputStream source = this.getClass().getResourceAsStream(DICTIONARY_RESOURCE);
-            DictionaryParser.parseDictionary(source, instance);
+            DictionaryParser.parseDictionary(source, this);
         } catch (IOException e) {
             throw new RuntimeException("default dictionary unavailable", e);
         }
 	}
 	
-	private static final String DICTIONARY_RESOURCE = "org/tinyradius/dictionary/default_dictionary";
+	private static final String DICTIONARY_RESOURCE = "/org/tinyradius/dictionary/default_dictionary";
 	private static final DefaultDictionary instance = new DefaultDictionary();
 	
 	
