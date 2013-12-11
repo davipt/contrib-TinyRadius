@@ -281,6 +281,8 @@ public class VendorSpecificAttribute extends RadiusAttribute {
 				throw new RadiusException("Vendor-Specific attribute malformed");
 			// int vsaSubType = data[(offset + 6) + pos] & 0x0ff;
 			int vsaSubLen = data[(offset + 6) + pos + 1] & 0x0ff;
+            if (vsaSubLen == 0)
+                throw new RadiusException("Vendor-Specific attribute malformed");
 			pos += vsaSubLen;
 			count++;
 		}

@@ -115,8 +115,10 @@ implements WritableDictionary {
 		Integer typeCode = new Integer(attributeType.getTypeCode());
 		String attributeName = attributeType.getName();
 		
-		if (attributesByName.containsKey(attributeName))
-			throw new IllegalArgumentException("duplicate attribute name: " + attributeName);
+		if (attributesByName.containsKey(attributeName)) {
+            throw new IllegalArgumentException("duplicate attribute name: " + attributeName
+                    + " prev='" + attributesByName.get(attributeName) + "'");
+		}
 		
 		Map vendorAttributes = (Map)attributesByCode.get(vendorId);
 		if (vendorAttributes == null) {
@@ -124,7 +126,8 @@ implements WritableDictionary {
 			attributesByCode.put(vendorId, vendorAttributes);
 		}
 		if (vendorAttributes.containsKey(typeCode))
-			throw new IllegalArgumentException("duplicate type code: " + typeCode);
+			throw new IllegalArgumentException("duplicate type code: " + typeCode 
+			        + " prev='" + vendorAttributes.get(typeCode)+"'");
 		
 		attributesByName.put(attributeName, attributeType);
 		vendorAttributes.put(typeCode, attributeType);
