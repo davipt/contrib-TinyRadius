@@ -80,9 +80,9 @@ public class DictionaryParser {
     				parseVendorLine(dictionary, tok, lineNum);
     			else
                     //throw new IOException("unknown line type: " + lineType + " line: " + lineNum);
-    			    System.err.println("[dictionary] unknown line type: " + lineType + ", line: " + lineNum);
+    			    System.err.println("[dictionary] unknown line type: " + lineType + ", line: " + lineNum);
 			} catch ( IOException e ) {
-                System.err.println("[dictionary] " + e.getMessage()+", line='" + line + "', line: " + lineNum);
+                System.err.println("[dictionary] " + e.getMessage()+", line='" + line + "', line: " + lineNum);
 			}
 		}
 	}
