@@ -826,7 +826,8 @@ public class RadiusPacket {
 	 * @exception IOException if an IO error occurred
 	 * @exception RadiusException if the Radius packet is malformed
 	 */
-	protected static RadiusPacket decodePacket(Dictionary dictionary, InputStream in, String sharedSecret, RadiusPacket request) 
+	protected static RadiusPacket decodePacket(final Dictionary dictionary, final InputStream in, final String sharedSecret, 
+	        final RadiusPacket request) 
 	throws IOException, RadiusException {
 		// check shared secret
 		if (sharedSecret == null || sharedSecret.length() == 0)
@@ -856,7 +857,7 @@ public class RadiusPacket {
 	
 		// check and count attributes
 		int pos = 0;
-		int attributeCount = 0;
+		//int attributeCount = 0;
 		while (pos < attributeData.length) {
 			if (pos + 1 >= attributeData.length)
 				throw new RadiusException("bad packet: attribute length mismatch");
@@ -864,7 +865,7 @@ public class RadiusPacket {
 			if (attributeLength < 2)
 				throw new RadiusException("bad packet: invalid attribute length");
 			pos += attributeLength;
-			attributeCount++;
+			//attributeCount++;
 		}
 		if (pos != attributeData.length)
 			throw new RadiusException("bad packet: attribute length mismatch");

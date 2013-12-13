@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.tinyradius.attribute.RadiusAttribute;
@@ -34,7 +33,22 @@ import org.tinyradius.packet.RadiusPacket;
  * accountingRequestReceived().
  */
 public abstract class RadiusServer {
+    
+    private final String mSingleSecret;
 	
+    /** */
+    protected RadiusServer() {
+        this(null);
+    }
+    
+    /**
+     * @param singleSecret use a single secret for all clients.
+     */
+    protected RadiusServer(String singleSecret) {
+        super();
+        this.mSingleSecret=singleSecret;
+    }
+    
 	/**
 	 * Returns the shared secret used to communicate with the client with the
 	 * passed IP address or null if the client is not allowed at this server.
@@ -95,49 +109,105 @@ public abstract class RadiusServer {
 	 */
 	public void start(boolean listenAuth, boolean listenAcct) {
 		if (listenAuth) {
+		    @SuppressWarnings("hiding")
+            final Log LOGGER = RadiusServer.LOGGER;
 			new Thread() {
 				public void run() {
 					setName("Radius Auth Listener");
 					try {
-						logger.info("starting RadiusAuthListener on port " + getAuthPort());
+						LOGGER.info("starting RadiusAuthListener on port " + getAuthPort());
 						listenAuth();
-						logger.info("RadiusAuthListener is being terminated");
+						LOGGER.info("RadiusAuthListener is being terminated");
 					} catch(Exception e) {
 						e.printStackTrace();
-						logger.fatal("auth thread stopped by exception", e);
+						LOGGER.fatal("auth thread stopped by exception", e);
 					} finally {
 						authSocket.close();
-						logger.debug("auth socket closed");
+						LOGGER.debug("auth socket closed");
 					}
 				}
 			}.start();
 		}
 		
 		if (listenAcct) {
+            @SuppressWarnings("hiding")
+            final Log LOGGER = RadiusServer.LOGGER;
 			new Thread() {
 				public void run() {
 					setName("Radius Acct Listener");
 					try {
-						logger.info("starting RadiusAcctListener on port " + getAcctPort());
+						LOGGER.info("starting RadiusAcctListener on port " + getAcctPort());
 						listenAcct();
-						logger.info("RadiusAcctListener is being terminated");
+						LOGGER.info("RadiusAcctListener is being terminated");
 					} catch(Exception e) {
 						e.printStackTrace();
-						logger.fatal("acct thread stopped by exception", e);
+						LOGGER.fatal("acct thread stopped by exception", e);
 					} finally {
 						acctSocket.close();
-						logger.debug("acct socket closed");
+						LOGGER.debug("acct socket closed");
 					}
 				}
 			}.start();
 		}
 	}
 	
+    /**
+     * Starts the Radius server.
+     * @param listenAuth open auth port?
+     * @param listenAcct open acct port?
+	 * @throws SocketException socket exception.
+     */
+    public void start(int listenAuth, int listenAcct) throws SocketException {
+        for(int i=0; i<listenAuth;i++) {
+            @SuppressWarnings("hiding")
+            final Log LOGGER = RadiusServer.LOGGER;
+            new Thread() {
+                private final DatagramSocket socket = getAuthSocket();
+                public void run() {
+                    setName("Radius Auth Listener");
+                    try {
+                        LOGGER.info("starting RadiusAuthListener on port " + getAuthPort());
+                        listen(this.socket);
+                        LOGGER.info("RadiusAuthListener is being terminated");
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        LOGGER.fatal("auth thread stopped by exception", e);
+                    } finally {
+                        this.socket.close();
+                        LOGGER.debug("auth socket closed");
+                    }
+                }
+            }.start();
+        }
+        
+        for(int i=0; i<listenAcct; i++) {
+            @SuppressWarnings("hiding")
+            final Log LOGGER = RadiusServer.LOGGER;
+            new Thread() {
+                private final DatagramSocket socket = getAcctSocket();
+                public void run() {
+                    setName("Radius Acct Listener");
+                    try {
+                        LOGGER.info("starting RadiusAcctListener on port " + getAcctPort());
+                        listen(this.socket);
+                        LOGGER.info("RadiusAcctListener is being terminated");
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        LOGGER.fatal("acct thread stopped by exception", e);
+                    } finally {
+                        this.socket.close();
+                        LOGGER.debug("acct socket closed");
+                    }
+                }
+            }.start();
+        }
+    }
+	
 	/**
 	 * Stops the server and closes the sockets.
 	 */
 	public void stop() {
-		logger.info("stopping Radius server");
+		LOGGER.info("stopping Radius server");
 		closing = true;
 		if (authSocket != null)
 			authSocket.close();
@@ -295,62 +365,83 @@ public abstract class RadiusServer {
 	 */
 	protected void listen(DatagramSocket s) {
 		DatagramPacket packetIn = new DatagramPacket(new byte[RadiusPacket.MAX_PACKET_LENGTH], RadiusPacket.MAX_PACKET_LENGTH);
-		while (true) {
+	    for(;;) {
 			try {
-				// receive packet
-				try {
-					logger.trace("about to call socket.receive()");
+			    for(;;) {
+    				// receive packet
+			        /*
+    				try {
+    				/* */
+				    if(LOGGER.isTraceEnabled())
+				        LOGGER.trace("about to call socket.receive()");
 					s.receive(packetIn);
-					if (logger.isDebugEnabled())
-						logger.debug("receive buffer size = " + s.getReceiveBufferSize());
-				} catch (SocketException se) {
-					if (closing) {
-						// end thread
-						logger.info("got closing signal - end listen thread");
-						return;
-					} else {
-						// retry s.receive()
-						logger.error("SocketException during s.receive() -> retry", se);
-						continue;
-					}
-				}
-								
-				// check client
-				InetSocketAddress localAddress = (InetSocketAddress)s.getLocalSocketAddress();
-				InetSocketAddress remoteAddress = new InetSocketAddress(packetIn.getAddress(), packetIn.getPort());				
-				String secret = getSharedSecret(remoteAddress);
-				if (secret == null) {
-					if (logger.isInfoEnabled())
-						logger.info("ignoring packet from unknown client " + remoteAddress + " received on local address " + localAddress);
-					continue;
-				}
-				
-				// parse packet
-				RadiusPacket request = makeRadiusPacket(packetIn, secret);
-				if (logger.isInfoEnabled())
-					logger.info("received packet from " + remoteAddress + " on local address " + localAddress + ": " + request);
-
-				// handle packet
-				logger.trace("about to call RadiusServer.handlePacket()");
-				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, secret);
-				
-				// send response
-				if (response != null) {
-					if (logger.isInfoEnabled())
-						logger.info("send response: " + response);
-					DatagramPacket packetOut = makeDatagramPacket(response, secret, remoteAddress.getAddress(), packetIn.getPort(), request);
-					s.send(packetOut);
-				} else
-					logger.info("no response sent");						
+					if (LOGGER.isDebugEnabled())
+						LOGGER.debug("receive buffer size = " + s.getReceiveBufferSize());
+					/*
+    				} catch (SocketException se) {
+    					if (this.closing) {
+    						// end thread
+    						LOGGER.info("got closing signal - end listen thread");
+    						return;
+    					}
+    					// retry s.receive()
+                        if(LOGGER.isErrorEnabled())
+    					    LOGGER.error("SocketException during s.receive() -> retry", se);
+    					continue;
+    				}
+    				/* */
+    								
+    				// check client
+    				InetSocketAddress localAddress = (InetSocketAddress)s.getLocalSocketAddress();
+    				InetSocketAddress remoteAddress = new InetSocketAddress(packetIn.getAddress(), packetIn.getPort());				
+    				
+    				String secret = this.mSingleSecret == null ? getSharedSecret(remoteAddress) : this.mSingleSecret;
+    				if (secret == null) {
+    					if (LOGGER.isInfoEnabled())
+    						LOGGER.info("ignoring packet from unknown client " + remoteAddress + " received on local address " + localAddress);
+    					continue;
+    				}
+    				
+    				// parse packet
+    				RadiusPacket request = makeRadiusPacket(packetIn, secret);
+    				if (LOGGER.isInfoEnabled())
+    					LOGGER.info("received packet from " + remoteAddress + " on local address " + localAddress + ": " + request);
+    
+    				// handle packet
+    				if(LOGGER.isTraceEnabled())
+    				    LOGGER.trace("about to call RadiusServer.handlePacket()");
+    				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, secret);
+    				
+    				// send response
+    				if (response != null) {
+    					if (LOGGER.isInfoEnabled())
+    						LOGGER.info("send response: " + response);
+    					DatagramPacket packetOut = makeDatagramPacket(response, secret, remoteAddress.getAddress(), packetIn.getPort(), request);
+    					s.send(packetOut);
+    				} else
+                        if (LOGGER.isInfoEnabled())
+                            LOGGER.info("no response sent");
+			    }
+            } catch (SocketException se) {
+                if (this.closing) {
+                    // end thread
+                    LOGGER.info("got closing signal - end listen thread");
+                    return;
+                }
+                if(LOGGER.isErrorEnabled())
+                    LOGGER.error("SocketException during s.receive() -> retry", se);
 			} catch (SocketTimeoutException ste) {
 				// this is expected behaviour
-				logger.trace("normal socket timeout");
+                if(LOGGER.isTraceEnabled())
+                    LOGGER.trace("normal socket timeout");
 			} catch (IOException ioe) {
 				// error while reading/writing socket
-				logger.error("communication error", ioe);
+	             if(LOGGER.isErrorEnabled())
+	                 LOGGER.error("communication error", ioe);
 			} catch (RadiusException re) {
 				// malformed packet
-				logger.error("malformed Radius packet", re);
+                if(LOGGER.isErrorEnabled())
+                    LOGGER.error("malformed Radius packet", re);
 			}
 		}
 	}
@@ -374,18 +465,18 @@ public abstract class RadiusServer {
 				if (request instanceof AccessRequest)
 					response = accessRequestReceived((AccessRequest)request, remoteAddress);
 				else
-					logger.error("unknown Radius packet type: " + request.getPacketType());
+					LOGGER.error("unknown Radius packet type: " + request.getPacketType());
 			} else if (localAddress.getPort() == getAcctPort()) {
 				// handle packets on acct port
 				if (request instanceof AccountingRequest)
 					response = accountingRequestReceived((AccountingRequest)request, remoteAddress);
 				else
-					logger.error("unknown Radius packet type: " + request.getPacketType());
+					LOGGER.error("unknown Radius packet type: " + request.getPacketType());
 			} else {
 				// ignore packet on unknown port
 			}
 		} else
-			logger.info("ignore duplicate packet");
+			LOGGER.info("ignore duplicate packet");
 
 		return response;
 	}
@@ -488,10 +579,9 @@ public abstract class RadiusServer {
 							// packet is duplicate if stored authenticator is equal
 							// to the packet authenticator
 							return Arrays.equals(p.authenticator, authenticator);
-						} else {
-							// should not happen, packet is duplicate
-							return true;
 						}
+						// should not happen, packet is duplicate
+						return true;
 					}
 				}
 			}
@@ -517,7 +607,7 @@ public abstract class RadiusServer {
 	private List receivedPackets = new LinkedList();
 	private long duplicateInterval = 30000; // 30 s
 	private boolean closing = false;
-	private static Log logger = LogFactory.getLog(RadiusServer.class);
+	private static final Log LOGGER = LogFactory.getLog(RadiusServer.class);
 	
 }
 
@@ -525,7 +615,7 @@ public abstract class RadiusServer {
  * This internal class represents a packet that has been received by 
  * the server.
  */
-class ReceivedPacket {
+final class ReceivedPacket {
 	
 	/**
 	 * The identifier of the packet.
