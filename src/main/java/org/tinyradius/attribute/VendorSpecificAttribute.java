@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
 import org.tinyradius.dictionary.AttributeType;
 import org.tinyradius.dictionary.Dictionary;
 import org.tinyradius.util.RadiusException;
+import org.tinyradius.util.RadiusUtil;
 
 /**
  * This class represents a "Vendor-Specific" attribute.
@@ -279,26 +279,32 @@ public class VendorSpecificAttribute extends RadiusAttribute {
 		while (pos < vsaLen) {
 			if (pos + 1 >= vsaLen)
 				throw new RadiusException("Vendor-Specific attribute malformed");
-			// int vsaSubType = data[(offset + 6) + pos] & 0x0ff;
-			int vsaSubLen = data[(offset + 6) + pos + 1] & 0x0ff;
+            int vsaSubType = data[(offset + 6) + pos ] & 0x0ff;
+            int vsaSubLen = data[(offset + 6) + pos + 1] & 0x0ff;
             if (vsaSubLen == 0)
-                throw new RadiusException("Vendor-Specific attribute malformed");
+                throw new RadiusException("Vendor-Specific "+vendorId+" attribute malformed sublen=0, subtype="+vsaSubType 
+                        + " data="+RadiusUtil.escape(data,offset,length));
 			pos += vsaSubLen;
 			count++;
 		}
 		if (pos != vsaLen)
-			throw new RadiusException("Vendor-Specific attribute malformed");
+			throw new RadiusException("Vendor-Specific "+vendorId+" attribute malformed pos="+pos+"!=vsaLen="+vsaLen + " data="+RadiusUtil.escape(data,offset,length));
 
 		subAttributes = new ArrayList(count);
 		pos = 0;
 		while (pos < vsaLen) {
-			int subtype = data[(offset + 6) + pos] & 0x0ff;
-			int sublength = data[(offset + 6) + pos + 1] & 0x0ff;
+            int vsaSubType = data[(offset + 6) + pos] & 0x0ff;
+            int vsaSubLen = (data[(offset + 6) + pos + 1] & 0x0ff);
 			RadiusAttribute a = createRadiusAttribute(getDictionary(),
-					vendorId, subtype);
-			a.readAttribute(data, (offset + 6) + pos, sublength);
+					vendorId, vsaSubType);
+			try {
+			    a.readAttribute(data, (offset + 6) + pos, vsaSubLen);
+			} catch (RadiusException e ) {
+	            throw new RadiusException("Vendor-Specific "+vendorId+" attribute malformed pos="+pos
+	                    +" data="+RadiusUtil.escape(data,offset,length)+" ("+e.getMessage()+")");
+			}
 			subAttributes.add(a);
-			pos += sublength;
+			pos += vsaSubLen;
 		}
 	}
 

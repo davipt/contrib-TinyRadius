@@ -394,28 +394,34 @@ public abstract class RadiusServer {
     				// check client
     				InetSocketAddress localAddress = (InetSocketAddress)s.getLocalSocketAddress();
     				InetSocketAddress remoteAddress = new InetSocketAddress(packetIn.getAddress(), packetIn.getPort());				
-    				
+
+    				/* FIXME DAVI IGNORE SECRET
     				String secret = this.mSingleSecret == null ? getSharedSecret(remoteAddress) : this.mSingleSecret;
     				if (secret == null) {
     					if (LOGGER.isInfoEnabled())
     						LOGGER.info("ignoring packet from unknown client " + remoteAddress + " received on local address " + localAddress);
     					continue;
     				}
+    				*/
+    				String secret = null; // DAVI
     				
     				// parse packet
     				RadiusPacket request = makeRadiusPacket(packetIn, secret);
-    				if (LOGGER.isInfoEnabled())
-    					LOGGER.info("received packet from " + remoteAddress + " on local address " + localAddress + ": " + request);
+    				if (LOGGER.isDebugEnabled())
+    					LOGGER.debug("received packet from " + remoteAddress + " on local address " + localAddress + ": " + request);
     
     				// handle packet
     				if(LOGGER.isTraceEnabled())
     				    LOGGER.trace("about to call RadiusServer.handlePacket()");
     				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, secret);
     				
+    				/* FIXME DAVI */
+    				response = null;
+    				
     				// send response
     				if (response != null) {
-    					if (LOGGER.isInfoEnabled())
-    						LOGGER.info("send response: " + response);
+    					if (LOGGER.isDebugEnabled())
+    						LOGGER.debug("send response: " + response);
     					DatagramPacket packetOut = makeDatagramPacket(response, secret, remoteAddress.getAddress(), packetIn.getPort(), request);
     					s.send(packetOut);
     				} else
@@ -440,6 +446,10 @@ public abstract class RadiusServer {
 	                 LOGGER.error("communication error", ioe);
 			} catch (RadiusException re) {
 				// malformed packet
+                if(LOGGER.isErrorEnabled())
+                    LOGGER.error("malformed Radius packet", re);
+            } catch (RuntimeException re) {
+                // malformed packet
                 if(LOGGER.isErrorEnabled())
                     LOGGER.error("malformed Radius packet", re);
 			}

@@ -175,18 +175,36 @@ public class DictionaryParser {
 		if (tok.countTokens() < 2) // allow comments
 			throw new IOException("syntax error on line " + lineNum);
 		
-		String t1=tok.nextToken().trim(),t2=tok.nextToken().trim();
+        String t1=tok.nextToken().trim(),t2=tok.nextToken().trim();
+        /*
+		String t1=tok.nextToken().trim(), t2=tok.nextToken().trim(), t3=null;
+		int sizeAttrCode=1, sizeAttrLen=1;
+		if(tok.hasMoreTokens())
+		    t3=tok.nextToken().trim();
+		if(t3!=null) {
+		    if(t3.startsWith("format=")) {
+		        String[] parts = t3.substring(7).split(",");
+		        sizeAttrCode = Integer.parseInt(parts[0]);
+		        if(parts.length>1)
+		            sizeAttrLen = Integer.parseInt(parts[1]);
+		    }
+		    //System.out.println("t3='"+t3+"' sizeAttrCode="+sizeAttrCode+" sizeAttrLen="+sizeAttrLen);
+		}
+		*/
+        
 		// DAVI parse number dec or hex
 		try {
 			int vendorId = Integer.parseInt(t1);
 			String vendorName = t2;
 
-			dictionary.addVendor(vendorId, vendorName);
+            //dictionary.addVendor(vendorId, vendorName, sizeAttrCode, sizeAttrLen);
+            dictionary.addVendor(vendorId, vendorName);
 		} catch( NumberFormatException e ) {
 			int vendorId = Integer.parseInt(t2);
 			String vendorName = t1;
 
-			dictionary.addVendor(vendorId, vendorName);
+            //dictionary.addVendor(vendorId, vendorName, sizeAttrCode, sizeAttrLen);
+            dictionary.addVendor(vendorId, vendorName);
 		}
 	}
 	

@@ -17,8 +17,11 @@ extends Dictionary {
 	 * Adds the given vendor to the dictionary.
 	 * @param vendorId vendor ID
 	 * @param vendorName name of the vendor
+     * //@param sizeAttrCode the number of bytes for the vendor specific attribute code.
+     * //@param sizeAttrLen the number of bytes for the vendor specific attribute len.
 	 */
-	public void addVendor(int vendorId, String vendorName);
+	//public void addVendor(int vendorId, String vendorName, int sizeAttrCode, int sizeAttrLen);
+    public void addVendor(int vendorId, String vendorName);
 
 	/**
 	 * Adds an AttributeType object to the dictionary.

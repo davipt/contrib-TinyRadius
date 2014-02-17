@@ -58,5 +58,31 @@ public class RadiusUtil {
 			}
 		return hex.toString();
 	}
-	
+
+	 /**
+     * Returns a string representation of the byte data with unprintable chars as {xx}.
+     *
+     * @param data the data.
+     * @param start the first byte.
+     * @param len the number of bytes.
+     * @return the string representation of the byte[].
+     */
+    public static String escape(final byte[] data, final int start, final int len) {
+        if (data == null)
+            return null;
+        if (len == 0)
+            return "";
+        final StringBuilder sb = new StringBuilder(len);
+        final int end = start + len;
+        for (int i = start; i < end; i++) {
+            final byte b = data[i];
+            //CHECKSTYLE:OFF MagicNumberCheck
+            if (b < 32 || b == 127)
+                //CHECKSTYLE:ON
+                sb.append('{').append(String.format("%02X", Byte.valueOf(b))).append('}');
+            else
+                sb.append((char) b);
+        }
+        return sb.toString();
+    }
 }

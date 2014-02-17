@@ -16,6 +16,7 @@ import java.util.Map;
  * methods <code>addAttributeType</code> and
  * <code>addVendor</code>.
  * @see #addAttributeType(AttributeType)
+ * //@see #addVendor(int, String, int, int)
  * @see #addVendor(int, String)
  * @see org.tinyradius.dictionary.Dictionary
  * @see org.tinyradius.dictionary.WritableDictionary
@@ -85,21 +86,32 @@ implements WritableDictionary {
 	public String getVendorName(int vendorId) {
 		return (String)vendorsByCode.get(new Integer(vendorId));
 	}
-	
+
+	/*
+    public Integer[] getVendorSize(int vendorId) {
+        return (Integer[])vendorsAttrCodeSize.get(new Integer(vendorId));
+    }
+	 */
+
 	/**
 	 * Adds the given vendor to the cache.
 	 * @param vendorId vendor ID
 	 * @param vendorName name of the vendor
 	 * @exception IllegalArgumentException empty vendor name, invalid vendor ID
 	 */
-	public void addVendor(int vendorId, String vendorName) {
+    //public void addVendor(int vendorId, String vendorName, int sizeAttrCode, int sizeAttrLen) {
+    public void addVendor(int vendorId, String vendorName) {
 		if (vendorId < 0)
 			throw new IllegalArgumentException("vendor ID must be positive");
 		if (getVendorName(vendorId) != null)
 			throw new IllegalArgumentException("duplicate vendor code");
 		if (vendorName == null || vendorName.length() == 0)
 			throw new IllegalArgumentException("vendor name empty");
-		vendorsByCode.put(new Integer(vendorId), vendorName);
+        this.vendorsByCode.put(new Integer(vendorId), vendorName);
+        /*
+		if(sizeAttrCode != 1 || sizeAttrLen != 1)
+		    this.vendorsAttrCodeSize.put(new Integer(vendorId), new Integer[]{Integer.valueOf(sizeAttrCode), Integer.valueOf(sizeAttrLen)});
+		    */
 	}
 	
 	/**
@@ -136,5 +148,6 @@ implements WritableDictionary {
 	private Map vendorsByCode = new HashMap();		// <Integer, String>
 	private Map attributesByCode = new HashMap();	// <Integer, <Integer, AttributeType>>
 	private Map attributesByName = new HashMap();	// <String, AttributeType>
+    //private Map vendorsAttrCodeSize = new HashMap();      // <Integer, Integer[2]>
 	
 }

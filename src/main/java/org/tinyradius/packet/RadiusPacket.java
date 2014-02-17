@@ -830,8 +830,10 @@ public class RadiusPacket {
 	        final RadiusPacket request) 
 	throws IOException, RadiusException {
 		// check shared secret
+	    /* FIXME DAVI
 		if (sharedSecret == null || sharedSecret.length() == 0)
 			throw new RuntimeException("no shared secret has been set");
+			*/
 	
 		// check request authenticator
 		if (request != null && request.getAuthenticator() == null)
@@ -891,7 +893,9 @@ public class RadiusPacket {
 		if (request == null) {
 			// decode attributes
 			rp.decodeRequestAttributes(sharedSecret);
+			/* FIXME DAVI
 			rp.checkRequestAuthenticator(sharedSecret, length, attributeData);
+			*/
 		} else {
 			// response packet: check authenticator
 			rp.checkResponseAuthenticator(sharedSecret, length, attributeData, request.getAuthenticator());

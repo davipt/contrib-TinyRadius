@@ -24,7 +24,7 @@ extends MemoryDictionary{
 	 * @return DefaultDictionary instance
 	 */
 	public static Dictionary getDefaultDictionary() {
-		return instance;
+		return other == null ? instance : other;
 	}
 	
 	/**
@@ -40,6 +40,8 @@ extends MemoryDictionary{
             throw new RuntimeException("default dictionary unavailable", e);
         }
 	}
+	
+	public static Dictionary other;
 	
 	private static final String DICTIONARY_RESOURCE = "/org/tinyradius/dictionary/default_dictionary";
 	private static final DefaultDictionary instance = new DefaultDictionary();

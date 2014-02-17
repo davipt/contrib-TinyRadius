@@ -8,6 +8,7 @@ package org.tinyradius.attribute;
 
 import org.tinyradius.dictionary.AttributeType;
 import org.tinyradius.util.RadiusException;
+import org.tinyradius.util.RadiusUtil;
 
 /**
  * This class represents a Radius attribute which only
@@ -121,8 +122,9 @@ public class IntegerAttribute extends RadiusAttribute {
 	 */
 	public void readAttribute(byte[] data, int offset, int length)
 	throws RadiusException {
-		if (length != 6)
-			throw new RadiusException("integer attribute: expected 4 bytes data");
+		if (length != 6 && length != 4 && length != 3) // int4, int2, int1
+			throw new RadiusException("integer attribute: expected 4 bytes data, length="+length
+			        +" data="+RadiusUtil.escape(data,offset, Math.min(length, data.length-offset)));
 		super.readAttribute(data, offset, length);
 	}
 	
